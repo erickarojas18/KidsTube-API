@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 
+
 const app = express();
 app.use(express.json());
 app.use(cors());
@@ -12,6 +13,8 @@ connectDB();
 app.use('/api/videos', require('./routes/videos'));
 app.use('/api/auth', require('./routes/auth')); 
 
+const restrictedUserRoutes = require("./routes/restrictedUsers"); // Importa la ruta
+app.use("/api/restricted-users", restrictedUserRoutes); // Usa la ruta
 
 const userRoutes = require("./routes/users"); // Importa la ruta
 app.use("/api/users", userRoutes); // Asigna la ruta

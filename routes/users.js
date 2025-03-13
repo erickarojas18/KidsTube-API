@@ -38,25 +38,38 @@ router.post("/register", async (req, res) => {
 });
  // Login de usuario
 router.post("/login", async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      
-      // Buscar usuario en la base de datos
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(400).json({ message: "Usuario no encontrado ❌" });
-      }
-  
-      // Comparar contraseña con bcrypt
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(400).json({ message: "Contraseña incorrecta ❌" });
-      }
-  
-      res.status(200).json({ message: "Login exitoso 🎉", user });
-    } catch (error) {
-      res.status(500).json({ message: "Error en el login ❌", error });
+  try {
+    console.log("Cuerpo de la petición recibida:", req.body);
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Faltan datos en la petición ❌" });
     }
-  });
-  
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Usuario no encontrado ❌" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Contraseña incorrecta ❌" });
+    }
+
+    // ✅ Devolver el usuario con su _id
+    res.status(201).json({
+      message: "Login exitoso 🎉",
+      user: {
+        _id: user._id,  // 👈 Este dato es necesario
+        email: user.email,
+        name: user.name,
+      }
+    });
+
+  } catch (error) {
+    console.error("Error en el login:", error);
+    res.status(500).json({ message: "Error en el login ❌", error });
+  }
+});
+
 module.exports = router;
