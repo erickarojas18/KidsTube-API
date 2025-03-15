@@ -22,15 +22,15 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-        if (!user || !(await user.comparePassword(password))) {
-            return res.status(400).json({ message: 'Usuario o contraseña inválida' });
-        }
-
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token });
+      const { email, password } = req.body;
+      const user = await User.findOne({ email });
+      if (!user || !(await user.comparePassword(password))) {
+        return res.status(400).json({ message: 'Usuario o contraseña inválida' });
+      }
+  
+      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      res.json({ token, userId: user._id }); // Enviar el userId en la respuesta
     } catch (error) {
-        res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error.message });
     }
-};
+  };
