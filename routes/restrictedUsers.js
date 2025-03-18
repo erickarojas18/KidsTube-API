@@ -29,6 +29,18 @@ router.post("/validate-pin", async (req, res) => {
   }
 });
 
+// Obtener un usuario restringido por ID
+router.get("/profile/:id", async (req, res) => {
+  try {
+    const user = await RestrictedUser.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener el usuario restringido", error });
+  }
+});
+
 // Agregar usuario restringido
 router.post("/add-restricted-user", async (req, res) => {
   try {
@@ -87,5 +99,6 @@ router.delete("/delete-restricted-user/:id", async (req, res) => {
     res.status(500).json({ message: "Error al eliminar usuario restringido", error });
   }
 });
+
 
 module.exports = router;
