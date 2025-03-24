@@ -20,6 +20,10 @@ app.use("/api/restricted-users", restrictedUserRoutes);
 const userRoutes = require("./routes/users");
 app.use("/api/users", userRoutes);
 
+const playlistRoutes = require("./routes/playlists");
+app.use("/api/playlists", playlistRoutes);
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
 
