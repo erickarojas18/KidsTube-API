@@ -65,11 +65,19 @@ router.get('/user/:userId', async (req, res) => {
 // Crear una nueva playlist
 router.post('/', async (req, res) => {
     try {
+        console.log('📝 Creando nueva playlist:', req.body);
         const playlist = new Playlist(req.body);
         await playlist.save();
-        res.status(201).json(playlist);
+
+        // Obtener la playlist con los perfiles y videos poblados
+        const populatedPlaylist = await Playlist.findById(playlist._id)
+            .populate('videos')
+            .populate('profiles', 'name email avatar');
+
+        console.log('✅ Playlist creada:', populatedPlaylist);
+        res.status(201).json(populatedPlaylist);
     } catch (error) {
-        console.error('Error al crear playlist:', error);
+        console.error('❌ Error al crear playlist:', error);
         res.status(500).json({ message: 'Error al crear la playlist' });
     }
 });
