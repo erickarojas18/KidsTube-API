@@ -11,6 +11,12 @@ app.use(cors());
 
 connectDB();
 
+
+const playlistsRouter = require('./routes/playlists');
+
+app.use('/api/playlists', playlistsRouter);
+
+
 app.use("/api/videos", require("./routes/videos"));
 app.use("/api/auth", require("./routes/auth"));
 
@@ -25,7 +31,15 @@ app.use("/api/playlists", playlistRoutes);
 
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
+    console.log(`📁 API endpoints disponibles:`);
+    console.log(`   - /api/auth`);
+    console.log(`   - /api/videos`);
+    console.log(`   - /api/restricted-users`);
+    console.log(`   - /api/users`);
+    console.log(`   - /api/playlists`);
+});
 
 
 app.post("/api/validate-admin-pin", async (req, res) => {
@@ -56,3 +70,9 @@ app.post("/api/validate-admin-pin", async (req, res) => {
       res.status(500).json({ message: "Error al validar PIN", error: error.message });
     }
   });
+
+// Manejo de errores global
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ message: "¡Algo salió mal!", error: err.message });
+});
