@@ -29,6 +29,9 @@ app.use("/api/users", userRoutes);
 const playlistRoutes = require("./routes/playlists");
 app.use("/api/playlists", playlistRoutes);
 
+const historyRoutes = require("./routes/history");
+app.use("/api/history", historyRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
