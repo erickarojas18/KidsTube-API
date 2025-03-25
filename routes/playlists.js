@@ -152,4 +152,27 @@ router.delete('/:playlistId/videos/:videoId', async (req, res) => {
     }
 });
 
+// Obtener el historial de reproducción de un usuario
+router.get('/history/user/:userId', async (req, res) => {
+    try {
+        console.log('🔍 Buscando historial de reproducción para userId:', req.params.userId);
+        
+        if (!mongoose.Types.ObjectId.isValid(req.params.userId)) {
+            return res.status(400).json({ message: 'ID de usuario inválido' });
+        }
+
+        const playlists = await Playlist.find({
+            profiles: req.params.userId
+        })
+        .populate('videos', 'name url description');
+
+        const history = playlists.flatMap(playlist => playlist.videos);
+
+        res.json({ history });
+    } catch (error) {
+        console.error('❌ Error al obtener el historial de reproducción:', error);
+        res.status(500).json({ message: 'Error al obtener el historial' });
+    }
+});
+
 module.exports = router;
