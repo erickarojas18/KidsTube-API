@@ -58,7 +58,7 @@ router.post('/', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     await Playlist.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Playlist eliminada exitosamente' });
+    res.json({ message: '204' });
   } catch (error) {
     console.error('❌ Error al eliminar playlist:', error);
     res.status(500).json({ message: 'Error al eliminar la playlist' });
@@ -124,7 +124,7 @@ router.delete('/:playlistId/videos/:videoId', async (req, res) => {
     );
     await playlist.save();
 
-    res.json({ message: 'Video eliminado exitosamente' });
+    res.json({ message: '204' });
   } catch (error) {
     console.error('❌ Error al eliminar video:', error);
     res.status(500).json({ message: 'Error al eliminar el video de la playlist' });

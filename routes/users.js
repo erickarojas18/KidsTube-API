@@ -31,7 +31,7 @@ router.post("/register", async (req, res) => {
     });
 
     await newUser.save();
-    res.status(201).json({ message: "Usuario registrado correctamente" });
+    res.status(201).json({ message: "201 created" });
   } catch (error) {
     res.status(500).json({ message: "Error al registrar usuario", error });
   }
@@ -58,7 +58,7 @@ router.post("/login", async (req, res) => {
 
     // ✅ Devolver el usuario con su _id
     res.status(201).json({
-      message: "Login exitoso 🎉",
+      message: "201",
       user: {
         _id: user._id,  // 👈 Este dato es necesario
         email: user.email,
