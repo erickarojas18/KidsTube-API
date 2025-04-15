@@ -1,186 +1,199 @@
-// En tu carpeta de API: routes/playlists.js
 const express = require('express');
 const router = express.Router();
 const Playlist = require('../models/Playlist');
 const mongoose = require('mongoose');
 
-// Obtener todas las playlists
+// ✅ Obtener TODAS las playlists (administración general o debugging)
 router.get('/', async (req, res) => {
-    try {
-        console.log('🔍 Iniciando búsqueda de playlists...');
-        
-        const playlists = await Playlist.find()
-            .populate({
-                path: 'videos',
-                select: 'name url description'
-            })
-            .populate({
-                path: 'profiles',
-                select: 'name email'
-            });
-
-        console.log('✅ Playlists encontradas:', playlists);
-        res.json(playlists);
-    } catch (error) {
-        console.error('❌ Error al obtener playlists:', error);
-        console.error('Stack trace:', error.stack);
-        res.status(500).json({ 
-            message: 'Error al obtener las playlists',
-            error: error.message 
-        });
-    }
+  try {
+    const playlists = await Playlist.find()
+      .populate('videos', 'name url description')
+      .populate('profiles', 'name email avatar');
+      
+    res.json(playlists);
+  } catch (error) {
+    console.error('❌ Error al obtener playlists:', error);
+    res.status(500).json({ message: 'Error al obtener las playlists', error: error.message });
+  }
 });
 
-// Obtener playlists de un usuario específico
+// ✅ Obtener playlists de un usuario (perfil restringido)
 router.get('/user/:userId', async (req, res) => {
-    try {
-        console.log('🔍 Buscando playlists para userId:', req.params.userId);
-        
-        // Verificar si el userId es válido
-        if (!mongoose.Types.ObjectId.isValid(req.params.userId)) {
-            console.log('❌ ID de usuario inválido');
-            return res.status(400).json({ message: 'ID de usuario inválido' });
-        }
+  const { userId } = req.params;
 
-        // Buscar playlists donde el usuario es miembro
-        const playlists = await Playlist.find({
-            profiles: { $in: [req.params.userId] }
-        })
-        .populate('videos')
-        .populate('profiles', 'name email avatar');
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ message: 'ID de usuario inválido' });
+  }
 
-        console.log('📋 Playlists encontradas:', playlists);
-
-        // Devolver las playlists encontradas (incluso si está vacío)
-        res.json(playlists);
-    } catch (error) {
-        console.error('❌ Error al obtener playlists del usuario:', error);
-        res.status(500).json({ 
-            message: 'Error al obtener las playlists',
-            error: error.message 
-        });
-    }
+  try {
+    const playlists = await Playlist.find({ profiles: userId })
+      .populate('videos', 'name url description')
+      .populate('profiles', 'name email avatar');
+      
+    res.json(playlists);
+  } catch (error) {
+    console.error('❌ Error al obtener playlists del usuario:', error);
+    res.status(500).json({ message: 'Error al obtener las playlists', error: error.message });
+  }
 });
 
-// Crear una nueva playlist
+// ✅ Crear una nueva playlist
 router.post('/', async (req, res) => {
-    try {
-        console.log('📝 Creando nueva playlist:', req.body);
-        const playlist = new Playlist(req.body);
-        await playlist.save();
+  try {
+    const playlist = new Playlist(req.body);
+    await playlist.save();
 
-        // Obtener la playlist con los perfiles y videos poblados
-        const populatedPlaylist = await Playlist.findById(playlist._id)
-            .populate('videos')
-            .populate('profiles', 'name email avatar');
+    const populated = await Playlist.findById(playlist._id)
+      .populate('videos')
+      .populate('profiles', 'name email avatar');
 
-        console.log('✅ Playlist creada:', populatedPlaylist);
-        res.status(201).json(populatedPlaylist);
-    } catch (error) {
-        console.error('❌ Error al crear playlist:', error);
-        res.status(500).json({ message: 'Error al crear la playlist' });
-    }
+    res.status(201).json(populated);
+  } catch (error) {
+    console.error('❌ Error al crear playlist:', error);
+    res.status(500).json({ message: 'Error al crear la playlist' });
+  }
 });
 
-// Eliminar una playlist
+// ✅ Eliminar una playlist
 router.delete('/:id', async (req, res) => {
-    try {
-        await Playlist.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Playlist eliminada exitosamente' });
-    } catch (error) {
-        console.error('Error al eliminar playlist:', error);
-        res.status(500).json({ message: 'Error al eliminar la playlist' });
-    }
+  try {
+    await Playlist.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Playlist eliminada exitosamente' });
+  } catch (error) {
+    console.error('❌ Error al eliminar playlist:', error);
+    res.status(500).json({ message: 'Error al eliminar la playlist' });
+  }
 });
 
-// Obtener miembros de una playlist
+// ✅ Obtener miembros de una playlist
 router.get('/:playlistId/members', async (req, res) => {
-    try {
-        const playlist = await Playlist.findById(req.params.playlistId)
-            .populate('profiles', 'name email avatar');
-        
-        if (!playlist) {
-            return res.status(404).json({ message: 'Playlist no encontrada' });
-        }
+  try {
+    const playlist = await Playlist.findById(req.params.playlistId)
+      .populate('profiles', 'name email avatar');
 
-        res.json(playlist.profiles);
-    } catch (error) {
-        console.error('Error al obtener miembros:', error);
-        res.status(500).json({ message: 'Error al obtener los miembros' });
+    if (!playlist) {
+      return res.status(404).json({ message: 'Playlist no encontrada' });
     }
+
+    res.json(playlist.profiles);
+  } catch (error) {
+    console.error('❌ Error al obtener miembros:', error);
+    res.status(500).json({ message: 'Error al obtener los miembros' });
+  }
 });
 
-// Agregar video a una playlist
+// ✅ Agregar video a una playlist
 router.post('/:playlistId/videos', async (req, res) => {
-    try {
-        const { videoId } = req.body;
-        const playlist = await Playlist.findById(req.params.playlistId);
+  try {
+    const { videoId } = req.body;
+    const playlist = await Playlist.findById(req.params.playlistId);
 
-        if (!playlist) {
-            return res.status(404).json({ message: 'Playlist no encontrada' });
-        }
-
-        // Verificar si el video ya existe en la playlist
-        if (playlist.videos.includes(videoId)) {
-            return res.status(400).json({ message: 'El video ya está en la playlist' });
-        }
-
-        // Agregar el video a la playlist
-        playlist.videos.push(videoId);
-        await playlist.save();
-
-        // Obtener la playlist actualizada con los videos poblados
-        const updatedPlaylist = await Playlist.findById(playlist._id)
-            .populate('videos')
-            .populate('profiles', 'name email avatar');
-
-        res.json(updatedPlaylist);
-    } catch (error) {
-        console.error('Error al agregar video:', error);
-        res.status(500).json({ message: 'Error al agregar el video a la playlist' });
+    if (!playlist) {
+      return res.status(404).json({ message: 'Playlist no encontrada' });
     }
+
+    if (playlist.videos.includes(videoId)) {
+      return res.status(400).json({ message: 'El video ya está en la playlist' });
+    }
+
+    playlist.videos.push(videoId);
+    await playlist.save();
+
+    const updated = await Playlist.findById(playlist._id)
+      .populate('videos')
+      .populate('profiles', 'name email avatar');
+
+    res.json(updated);
+  } catch (error) {
+    console.error('❌ Error al agregar video:', error);
+    res.status(500).json({ message: 'Error al agregar el video a la playlist' });
+  }
 });
 
-// Eliminar video de una playlist
+// ✅ Eliminar video de una playlist
 router.delete('/:playlistId/videos/:videoId', async (req, res) => {
-    try {
-        const playlist = await Playlist.findById(req.params.playlistId);
+  try {
+    const playlist = await Playlist.findById(req.params.playlistId);
 
-        if (!playlist) {
-            return res.status(404).json({ message: 'Playlist no encontrada' });
-        }
-
-        playlist.videos = playlist.videos.filter(v => v._id.toString() !== req.params.videoId);
-        await playlist.save();
-
-        res.json({ message: 'Video eliminado exitosamente' });
-    } catch (error) {
-        console.error('Error al eliminar video de la playlist:', error);
-        res.status(500).json({ message: 'Error al eliminar el video de la playlist' });
+    if (!playlist) {
+      return res.status(404).json({ message: 'Playlist no encontrada' });
     }
+
+    playlist.videos = playlist.videos.filter(
+      (v) => v.toString() !== req.params.videoId
+    );
+    await playlist.save();
+
+    res.json({ message: 'Video eliminado exitosamente' });
+  } catch (error) {
+    console.error('❌ Error al eliminar video:', error);
+    res.status(500).json({ message: 'Error al eliminar el video de la playlist' });
+  }
 });
 
-// Obtener el historial de reproducción de un usuario
+// ✅ Obtener historial de reproducción del usuario (videos vistos en playlists)
 router.get('/history/user/:userId', async (req, res) => {
-    try {
-        console.log('🔍 Buscando historial de reproducción para userId:', req.params.userId);
-        
-        if (!mongoose.Types.ObjectId.isValid(req.params.userId)) {
-            return res.status(400).json({ message: 'ID de usuario inválido' });
-        }
+  const { userId } = req.params;
 
-        const playlists = await Playlist.find({
-            profiles: req.params.userId
-        })
-        .populate('videos', 'name url description');
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ message: 'ID de usuario inválido' });
+  }
 
-        const history = playlists.flatMap(playlist => playlist.videos);
+  try {
+    const playlists = await Playlist.find({ profiles: userId })
+      .populate('videos', 'name url description');
 
-        res.json({ history });
-    } catch (error) {
-        console.error('❌ Error al obtener el historial de reproducción:', error);
-        res.status(500).json({ message: 'Error al obtener el historial' });
+    const history = playlists.flatMap((playlist) => playlist.videos);
+
+    res.json({ history });
+  } catch (error) {
+    console.error('❌ Error al obtener historial:', error);
+    res.status(500).json({ message: 'Error al obtener el historial' });
+  }
+});
+
+// ✅ Editar una playlist
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, profiles } = req.body;
+
+    // Validar que el ID sea válido
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'ID de playlist inválido' });
     }
+
+    // Verificar si la playlist existe
+    const existingPlaylist = await Playlist.findById(id);
+    if (!existingPlaylist) {
+      return res.status(404).json({ message: 'Playlist no encontrada' });
+    }
+
+    // Preparar los datos de actualización
+    const updates = {};
+    if (name) updates.name = name;
+    if (profiles) updates.profiles = profiles;
+
+    // Actualizar la playlist
+    const updatedPlaylist = await Playlist.findByIdAndUpdate(
+      id, 
+      updates, 
+      { new: true, runValidators: true }
+    )
+      .populate('videos', 'name url description')
+      .populate('profiles', 'name email avatar');
+
+    res.json({
+      message: 'Playlist actualizada exitosamente',
+      playlist: updatedPlaylist
+    });
+  } catch (error) {
+    console.error('❌ Error al editar playlist:', error);
+    res.status(500).json({ 
+      message: 'Error al editar la playlist', 
+      error: error.message 
+    });
+  }
 });
 
 module.exports = router;
