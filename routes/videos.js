@@ -37,7 +37,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     try {
         await Video.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Video eliminado' });
+        res.json({ message: '204 delete' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

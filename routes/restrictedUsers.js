@@ -56,7 +56,7 @@ router.post("/add-restricted-user", async (req, res) => {
 
     const newUser = new RestrictedUser({ name, pin, avatar, parentUser });
     await newUser.save();
-    res.status(201).json({ message: "Usuario restringido agregado correctamente" });
+    res.status(201).json({ message: "201" });
   } catch (error) {
     res.status(500).json({ message: "Error al agregar usuario restringido", error });
   }
@@ -81,7 +81,7 @@ router.put("/edit-restricted-user/:id", async (req, res) => {
 
     if (!updatedUser) return res.status(404).json({ message: "Usuario no encontrado" });
 
-    res.json({ message: "Usuario actualizado correctamente", user: updatedUser });
+    res.json({ message: "202", user: updatedUser });
   } catch (error) {
     res.status(500).json({ message: "Error al actualizar usuario restringido", error });
   }
@@ -94,7 +94,7 @@ router.delete("/delete-restricted-user/:id", async (req, res) => {
 
     if (!deletedUser) return res.status(404).json({ message: "Usuario no encontrado" });
 
-    res.json({ message: "Usuario eliminado correctamente" });
+    res.json({ message: "204" });
   } catch (error) {
     res.status(500).json({ message: "Error al eliminar usuario restringido", error });
   }
