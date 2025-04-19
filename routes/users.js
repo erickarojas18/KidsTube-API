@@ -60,16 +60,18 @@ router.post("/login", async (req, res) => {
     res.status(201).json({
       message: "201",
       user: {
-        _id: user._id,  // 👈 Este dato es necesario
+        _id: user._id,  
         email: user.email,
         name: user.name,
       }
     });
 
   } catch (error) {
-    console.error("Error en el login:", error);
-    res.status(500).json({ message: "Error en el login ❌", error });
-  }
+    console.error("🔥 Error en el login:", error.message);
+    console.error("📄 Stack trace:", error.stack);
+    res.status(500).json({ message: "Error en el login ❌", error: error.message });
+}
+
 });
 
 module.exports = router;

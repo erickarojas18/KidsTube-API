@@ -1,36 +1,92 @@
-const User = require('../models/User');
-const jwt = require('jsonwebtoken');
+const crypto = require("crypto");
+const bcrypt = require("bcrypt");
+const User = require("../models/User");
+const { sendVerificationEmail } = require("../Servicemail");
 
-exports.register = async (req, res) => {
-    try {
-        const { email, password, phone, pin, firstName, lastName, country, birthDate } = req.body;
+// REGISTRO
+const register = async (req, res) => {
+  try {
+    const { email, password, phone, pin, name, lastname, country, birthdate } = req.body;
 
-        // Verificar que el usuario sea mayor de 18 años
-        const birthDateObj = new Date(birthDate);
-        const age = new Date().getFullYear() - birthDateObj.getFullYear();
-        if (age < 18) return res.status(400).json({ message: 'Debes ser mayor de 18 años.' });
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ message: "El correo ya está en uso." });
 
-        // Crear usuario
-        const user = new User({ email, password, phone, pin, firstName, lastName, country, birthDate });
-        await user.save();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const token = crypto.randomBytes(32).toString("hex");
 
-        res.status(201).json({ message: 'Usuario registrado con éxito' });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
+    const user = new User({
+      email,
+      password: hashedPassword,
+      phone,
+      pin,
+      name,
+      lastname,
+      country,
+      birthdate,
+      isVerified: false,
+      verificationToken: token
+    });
+
+    await user.save();
+    await sendVerificationEmail(user);
+
+    res.status(201).json({ message: "Registro exitoso. Verificá tu correo para activar la cuenta." });
+  } catch (error) {
+    console.error("Error en el registro:", error);
+    res.status(500).json({ message: "Error al registrar el usuario." });
+  }
 };
 
-exports.login = async (req, res) => {
+// LOGIN
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado." });
+
+    if (!user.isVerified) return res.status(403).json({ message: "Verificá tu correo antes de iniciar sesión." });
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) return res.status(401).json({ message: "Contraseña incorrecta." });
+
+    res.status(200).json({ message: "Inicio de sesión exitoso", user });
+  } catch (error) {
+    console.error("Error en login:", error);
+    res.status(500).json({ message: "Error al iniciar sesión." });
+  }
+};
+
+// VERIFICACIÓN
+const verifyUser = async (req, res) => {
+    const { token } = req.query;
+  
     try {
-      const { email, password } = req.body;
-      const user = await User.findOne({ email });
-      if (!user || !(await user.comparePassword(password))) {
-        return res.status(400).json({ message: 'Usuario o contraseña inválida' });
+      const user = await User.findOne({ verificationToken: token });
+  
+      if (!user) {
+        // Verificamos si hay algún usuario ya verificado con ese token eliminado
+        const alreadyVerified = await User.findOne({ isVerified: true, verificationToken: undefined });
+        if (alreadyVerified) {
+          return res.status(400).json({ message: "Este enlace ya fue utilizado. Tu cuenta ya está verificada." });
+        }
+        return res.status(400).json({ message: "Token inválido o expirado." });
       }
   
-      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-      res.json({ token, userId: user._id }); // Enviar el userId en la respuesta
+      user.isVerified = true;
+      user.verifiedAt = new Date();
+      user.verificationToken = undefined;
+      await user.save();
+  
+      res.redirect("http://localhost:3000/login");
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      console.error("Error al verificar cuenta:", error);
+      res.status(500).json({ message: "Error al verificar la cuenta." });
     }
   };
+  
+module.exports = {
+  register,
+  login,
+  verifyUser
+};
