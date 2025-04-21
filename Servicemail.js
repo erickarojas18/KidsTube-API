@@ -1,12 +1,14 @@
 const { MailerSend, EmailParams, Sender, Recipient } = require("mailersend");
 
 const mailersend = new MailerSend({
-  apiKey: "mlsn.e5e08b0494bdf84e268176f4298772746e37aadd732f1d078cfe33fa37a21806", // Podés moverlo a .env
+  apiKey: "mlsn.f1dca92d5ff3b75a3fabe64bcbbcd088773d11918e4195779f3f237fc480cd52", // Podés moverlo a .env
 });
 
 const sendVerificationEmail = async (user) => {
   const recipients = [new Recipient(user.email, `${user.name} ${user.lastname}`)];
-  const domain = "test-2p0347zzzp9lzdrn.mlsender.net";
+  //const domain = "test-2p0347zzzp9lzdrn.mlsender.net";
+  const domain = "test-dnvo4d99deng5r86.mlsender.net";
+
   const frontendUrl = `http://localhost:3000`; // ✅ Puerto correcto de tu app React
 
 
