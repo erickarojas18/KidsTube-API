@@ -59,32 +59,31 @@ const login = async (req, res) => {
 
 // VERIFICACIÓN
 const verifyUser = async (req, res) => {
-    const { token } = req.query;
-  
-    try {
-      const user = await User.findOne({ verificationToken: token });
-  
-      if (!user) {
-        // Verificamos si hay algún usuario ya verificado con ese token eliminado
-        const alreadyVerified = await User.findOne({ isVerified: true, verificationToken: undefined });
-        if (alreadyVerified) {
-          return res.status(400).json({ message: "Este enlace ya fue utilizado. Tu cuenta ya está verificada." });
-        }
-        return res.status(400).json({ message: "Token inválido o expirado." });
-      }
-  
-      user.isVerified = true;
-      user.verifiedAt = new Date();
-      user.verificationToken = undefined;
-      await user.save();
-  
-      res.redirect("http://localhost:3000/login");
-    } catch (error) {
-      console.error("Error al verificar cuenta:", error);
-      res.status(500).json({ message: "Error al verificar la cuenta." });
+  const { token } = req.query;
+
+  try {
+    const user = await User.findOne({ verificationToken: token });
+
+    if (!user) {
+      return res.status(400).json({ message: "Token inválido o expirado." });
     }
-  };
-  
+
+    if (user.isVerified) {
+      return res.status(400).json({ message: "Tu cuenta ya está verificada. Puedes iniciar sesión." });
+    }
+
+    user.isVerified = true;
+    user.verifiedAt = new Date();
+    user.verificationToken = undefined;
+    await user.save();
+
+    res.status(200).json({ message: "Cuenta verificada con éxito." });
+  } catch (error) {
+    console.error("Error al verificar cuenta:", error);
+    res.status(500).json({ message: "Error al verificar la cuenta." });
+  }
+};
+
 module.exports = {
   register,
   login,
