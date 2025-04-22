@@ -1,7 +1,7 @@
 const { MailerSend, EmailParams, Sender, Recipient } = require("mailersend");
 
 const mailersend = new MailerSend({
-  apiKey: "mlsn.e5e08b0494bdf84e268176f4298772746e37aadd732f1d078cfe33fa37a21806", // Podés moverlo a .env
+  apiKey: "mlsn.e5e08b0494bdf84e268176f4298772746e37aadd732f1d078cfe33fa37a21806",
 });
 
 const sendVerificationEmail = async (user) => {
