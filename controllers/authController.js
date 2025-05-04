@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
 const { sendVerificationEmail } = require("../Servicemail");
+const { sendSMS } = require("../SmsService");  // Importa el servicio para enviar SMS
 
 // REGISTRO
 const register = async (req, res) => {
@@ -50,14 +51,47 @@ const login = async (req, res) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(401).json({ message: "Contraseña incorrecta." });
 
-    res.status(200).json({ message: "Inicio de sesión exitoso", user });
+    // Generar un código único para el SMS
+    const smsCode = crypto.randomBytes(3).toString("hex"); // Puedes modificar la longitud del código
+
+    // Guardar el código en el usuario para la validación posterior
+    user.smsCode = smsCode;
+    await user.save();
+
+    // Enviar el SMS con el código
+    await sendSMS(user.phone, `Tu código de autenticación es: ${smsCode}`);
+
+    res.status(200).json({ message: "Inicio de sesión exitoso. Te hemos enviado un código de verificación por SMS.", userId: user._id });
   } catch (error) {
     console.error("Error en login:", error);
     res.status(500).json({ message: "Error al iniciar sesión." });
   }
 };
 
-// VERIFICACIÓN
+// VERIFICAR CÓDIGO SMS
+const verifySMSCode = async (req, res) => {
+  const { userId, code } = req.body;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado." });
+
+    if (user.smsCode !== code) {
+      return res.status(401).json({ message: "Código incorrecto." });
+    }
+
+    // Si el código es correcto, completamos la autenticación
+    user.smsCode = undefined; // Limpiar el código después de la verificación
+    await user.save();
+
+    res.status(200).json({ message: "Autenticación completada. Bienvenido a la aplicación." });
+  } catch (error) {
+    console.error("Error al verificar código SMS:", error);
+    res.status(500).json({ message: "Error al verificar el código." });
+  }
+};
+
+// VERIFICAR CORREO (Registra la cuenta)
 const verifyUser = async (req, res) => {
   const { token } = req.query;
 
@@ -65,7 +99,7 @@ const verifyUser = async (req, res) => {
     const user = await User.findOne({ verificationToken: token });
 
     if (!user) {
-      return res.status(400).json({ message: "Token inválido o expirado." });
+      return res.status(400).json({ message: "Tu cuenta ya esta verificada." });
     }
 
     if (user.isVerified) {
@@ -87,5 +121,6 @@ const verifyUser = async (req, res) => {
 module.exports = {
   register,
   login,
-  verifyUser
+  verifyUser,
+  verifySMSCode 
 };

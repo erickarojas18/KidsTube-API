@@ -9,10 +9,10 @@ const userSchema = new mongoose.Schema({
   lastname: { type: String, required: true },
   country: { type: String },
   birthdate: { type: Date, required: true },
-
   isVerified: { type: Boolean, default: false },
   verificationToken: { type: String },
-  verifiedAt: { type: Date }
+  verifiedAt: { type: Date },
+  smsCode: { type: String },
 });
 
 

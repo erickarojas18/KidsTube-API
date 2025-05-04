@@ -1,7 +1,7 @@
 const { MailerSend, EmailParams, Sender, Recipient } = require("mailersend");
 
 const mailersend = new MailerSend({ 
-  apiKey: "mlsn.e5e08b0494bdf84e268176f4298772746e37aadd732f1d078cfe33fa37a21806",//Ericka
+  apiKey: "mlsn.758eba4fba782abf03f9b58eeb116c3afabf32d105ede2bfc5f52a1ca2f9c2a9",//Ericka
 
   //apiKey: "mlsn.f1dca92d5ff3b75a3fabe64bcbbcd088773d11918e4195779f3f237fc480cd52"DANIELA
 });
